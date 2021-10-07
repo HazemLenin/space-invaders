@@ -1,27 +1,40 @@
 import pygame, sys
+from spriteSheet import SpriteSheet
+
+sprite_sheet = SpriteSheet('./assets/images/New Piskel.png')
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, vel, score):
+    def __init__(self, x, y, width, height, health, vel, score):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.image = pygame.Surface([width, height])
-        self.image.blit(
-            pygame.transform.scale(
-                pygame.image.load(sys.path[0] + r'\assets\images\spaceship.png'),
-                (self.width, self.height)
-            ),
-            (0, 0)
+        self.frames = (
+            sprite_sheet.parse_sprite('New Piskel4.png'),
+            sprite_sheet.parse_sprite('New Piskel5.png')
         )
+        self.frames_index = 0
+        self.image = pygame.transform.scale(
+            self.frames[self.frames_index],
+            (self.width, self.height)
+        )
+        self.health = health
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.vel = vel
-        # self.shoot_timer_default = 10
-        # self.shoot_timer = 10
         self.ready = True
         self.score = score
+
+    def update(self):
+        if self.health <= 1:
+            self.frames_index = 1
+            self.image = pygame.transform.scale(
+                self.frames[self.frames_index],
+                (self.width, self.height)
+            )
+        if self.health <= 0:
+            self.kill()
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -37,69 +50,69 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
 
-def alien_img(width=60, height=60, red=False):
-    return pygame.transform.scale(
-        pygame.image.load(sys.path[0] + rf'\assets\images\alien_{"red" if red else "green"}.png'),
-        (width, height)
-    )
-
-
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, health, vel):
+    def __init__(self, x, y, width, height):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.image = pygame.Surface([width, height])
-        self.image.blit(
-            alien_img(self.width, self.height),
-            (0, 0)
+        self.frames = (
+            (
+                sprite_sheet.parse_sprite('New Piskel0.png'),
+                sprite_sheet.parse_sprite('New Piskel1.png')
+            ),
+            (
+                sprite_sheet.parse_sprite('New Piskel2.png'),
+                sprite_sheet.parse_sprite('New Piskel3.png')
+            )
+        )
+        self.frames_index = 0
+        self.healthy_index = 0
+        self.image = pygame.transform.scale(
+            self.frames[0][self.frames_index],
+            (self.width, self.height)
         )
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.health = health
-        self.direction_before = 'DOWN'
-        self.direction = 'RIGHT'
+        self.health = 2
+
         self.steps_default = 140
         self.steps = 140
-        self.vel = vel
+        self.vel = 5
 
     def hit(self):
         self.health -= 1
 
-    def move(self):
-        if self.steps <= 0:
-            # if self.direction == 'RIGHT':
-            #     self.direction = 'DOWN'
-            #     self.steps_default = 45
-            #     self.direction_before = 'RIGHT'
-            # elif self.direction == 'LEFT':
-            #     self.direction = 'DOWN'
-            #     self.direction_before = 'LEFT'
-            #     self.steps_default = 45
-            if self.direction in ['RIGHT', 'LEFT']:
-                self.direction_before = self.direction
-                self.direction = 'DOWN'
-                self.steps_default = 45
-            elif self.direction == 'DOWN':
-                if self.direction_before == 'RIGHT':
-                    self.direction = 'LEFT'
-                elif self.direction_before == 'LEFT':
-                    self.direction = 'RIGHT'
-                self.steps_default = 140
-            self.steps = self.steps_default
-        else:
-            if self.direction == 'RIGHT':
-                self.rect.x += self.vel
-            elif self.direction == 'LEFT':
-                self.rect.x -= self.vel
-            elif self.direction == 'DOWN':
-                self.rect.y += self.vel
-            self.steps -= self.vel
+    def change_img(self):
+        self.frames_index += 1
+        self.frames_index %= len(self.frames)
+        self.image = pygame.transform.scale(
+            self.frames[self.healthy_index][self.frames_index],
+            (self.width, self.height)
+        )
 
     def update(self):
-        if self.health == 1:
-            self.image.blit(alien_img(self.width, self.height, True), (0, 0))
+        if self.health <= 1:
+            self.healthy_index = 1
+            self.image = pygame.transform.scale(
+                self.frames[self.healthy_index][self.frames_index],
+                (self.width, self.height)
+            )
 
         if self.health <= 0:
             self.kill()
+
+
+class EnemyBullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, vel):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.vel = vel
+        self.image = pygame.Surface((width, height))
+
+        self.image.fill((255, 255, 0))
+
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)

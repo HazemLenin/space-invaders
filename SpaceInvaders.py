@@ -1,16 +1,9 @@
 # importing libraries
-import pygame
-import random
-import tkinter
-import sys
-
-from gameSprites import Player, Bullet, Enemy
-
-# setup tkinter to get screen info
-root = tkinter.Tk()
+import pygame, random, sys
 
 # initialize pygame
 pygame.init()
+pygame.display.init()
 pygame.font.init()
 pygame.mixer.init()
 """
@@ -23,13 +16,14 @@ channel 2: win/lose music
 clock = pygame.time.Clock()
 
 # get screen size
-scr_width = root.winfo_screenwidth()
-scr_height = root.winfo_screenheight()
+scr_width, scr_height = pygame.display.get_desktop_sizes()[0]
 
 # setup window
-win = pygame.display.set_mode((scr_width, scr_height), pygame.FULLSCREEN)
+win = pygame.display.set_mode((scr_width, scr_height))
 
 pygame.display.set_caption('Space Invaders')
+
+from gameSprites import Player, Bullet, Enemy, EnemyBullet
 
 # define colors
 WHITE = (255, 255, 255)
@@ -39,30 +33,46 @@ BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 GREEN = (0, 255, 0)
 
-# fade to show main menu
-# def fade_intro(width, height):
-#     fade = pygame.Surface((width, height))
-#     fade.fill(BLACK)
-#
-#     for alpha in range(0, 10):
-#         fade.set_alpha(alpha * 28)
-#         render_intro()
-#         win.blit(fade, (0, 0))
-#         pygame.display.update()
-#         clock.tick(20)
-#
-#
-# def fade_window(width, height):
-#     fade = pygame.Surface((width, height))
-#     fade.fill(BLACK)
-#
-#     for alpha in range(-10, 0):
-#         fade.set_alpha(-(alpha * 28))
-#         renderWindow()
-#         win.blit(fade, (0, 0))
-#         pygame.display.update()
-#         clock.tick(20)
+jumps_to_255 = 60
+sleep_between_jumps = 70
 
+
+def fade_in(render_func):
+    fade_surface = pygame.Surface((scr_width, scr_height))
+    fade_surface.fill(BLACK)
+    for alpha in range(-255, 0, jumps_to_255):
+        fade_surface.set_alpha(-alpha)
+        render_func()
+        win.blit(fade_surface, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(sleep_between_jumps)
+
+
+def fade_out(render_func):
+    fade_surface = pygame.Surface((scr_width, scr_height))
+    fade_surface.fill(BLACK)
+    for alpha in range(0, 255, jumps_to_255):
+        fade_surface.set_alpha(alpha)
+        render_func()
+        win.blit(fade_surface, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(sleep_between_jumps)
+
+
+def intro():
+    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 70)
+    text = font.render('HAZEM LENIN', True, WHITE)
+
+    def render_intro():
+        win.blit(text, (
+            ((scr_width // 2) - (text.get_width() // 2)),
+            ((scr_height // 2) - (text.get_height() // 2)),
+        ))
+
+    fade_in(render_intro)
+    pygame.time.delay(2000)
+    fade_out(render_intro)
+    home()
 
 star_field = []  # to store stars positions
 
@@ -84,19 +94,28 @@ def render_stars():
         pygame.draw.rect(win, WHITE, (star[0], star[1], 5, 5))
 
 
-def render_home():
+def home():
     index = 0
-    choices = ['start', 'quit']
+    choices = ['START', 'QUIT']
 
     title_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 70)
     selection_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 50)
-    title = title_font.render('Space Invaders', True, WHITE)
+    title = title_font.render('SPACE INVADERS', True, WHITE)
 
     start_text = selection_font.render('> START', True, WHITE)
     quit_text = selection_font.render('QUIT', True, WHITE)
 
     change_selection_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\change_selection.wav')
     select_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\select.wav')
+
+    def render_home():
+        win.fill(BLACK)
+        render_stars()
+        win.blit(title, (((scr_width // 2) - (title.get_width() // 2)), 130))
+        win.blit(start_text, (636, 500))
+        win.blit(quit_text, (636, 600))
+
+    fade_in(render_home)
 
     while True:
 
@@ -112,22 +131,9 @@ def render_home():
                 if event.key in [pygame.K_UP, pygame.K_DOWN]:
                     pygame.mixer.Channel(1).play(change_selection_sound)
                     if event.key == pygame.K_UP:
-                        # if selection_y == 600:
-                        #     selection_y = 500
-                        #     intro_state = 'start'
-                        # else:
-                        #     selection_y = 600
-                        #     intro_state = 'quit'
                         index -= 1
 
                     if event.key == pygame.K_DOWN:
-                        # if selection_y == 600:
-                        #     selection_y = 500
-                        #     intro_state = 'start'
-                        #
-                        # else:
-                        #     selection_y = 600
-                        #     intro_state = 'quit'
                         index += 1
 
                     index %= len(choices)
@@ -149,44 +155,53 @@ def render_home():
 
         if keys[pygame.K_RETURN]:
             pygame.mixer.Channel(1).play(select_sound)
-            if choices[index] == 'start':
-                # fade_intro(scr_width, scr_height)
+            if choices[index] == 'START':
+                fade_out(render_home)
+                main_game()
                 break
 
-            elif choices[index] == 'quit':
+            elif choices[index] == 'QUIT':
                 pygame.quit()
                 sys.exit()
                 break
 
-        win.fill(BLACK)
-        render_stars()
-
-        win.blit(title, (((scr_width // 2) - (title.get_width() // 2)), 130))
-        win.blit(start_text, (636, 500))
-        win.blit(quit_text, (636, 600))
+        render_home()
 
         pygame.display.update()
 
 
-# fade_window(scr_width, scr_height)
+def pause():
+    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 50)
+    pause_text = font.render('PAUSED', True, WHITE)
+    continue_text = font.render('PRESS P TO CONTINUE', True, WHITE)
+    restart_text = font.render('PRESS R TO RESTART', True, WHITE)
+    quit_text = font.render('PRESS ESC TO quit', True, WHITE)
+    home_text = font.render('PRESS H TO GO HOME', True, WHITE)
 
-def render_pause():
-    pause_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 50)
-    pause_text = pause_font.render('PAUSED', True, WHITE)
-    continue_text = pause_font.render('PRESS P TO CONTINUE', True, WHITE)
-    quit_text = pause_font.render('PRESS ESC TO quit', True, WHITE)
-    win.blit(pause_text, (
-        ((scr_width // 2) - (pause_text.get_width() // 2)),
-        ((scr_height // 2) - (pause_text.get_height() // 2)),
-    ))
-    win.blit(continue_text, (
-        ((scr_width // 2) - (continue_text.get_width() // 2)),
-        ((scr_height // 2) - (continue_text.get_height() // 2) + 50),
-    ))
-    win.blit(quit_text, (
-        ((scr_width // 2) - (quit_text.get_width() // 2)),
-        ((scr_height // 2) - (quit_text.get_height() // 2) + 100),
-    ))
+    def render_pause():
+        win.blit(pause_text, (
+            ((scr_width // 2) - (pause_text.get_width() // 2)),
+            ((scr_height // 2) - (pause_text.get_height() // 2)),
+        ))
+        win.blit(restart_text, (
+            ((scr_width // 2) - (restart_text.get_width() // 2)),
+            ((scr_height // 2) - (restart_text.get_height() // 2) + 50)
+        ))
+        win.blit(continue_text, (
+            ((scr_width // 2) - (continue_text.get_width() // 2)),
+            ((scr_height // 2) - (continue_text.get_height() // 2) + 100),
+        ))
+        win.blit(quit_text, (
+            ((scr_width // 2) - (quit_text.get_width() // 2)),
+            ((scr_height // 2) - (quit_text.get_height() // 2) + 150),
+        ))
+        win.blit(home_text, (
+            ((scr_width // 2) - (home_text.get_width() // 2)),
+            ((scr_height // 2) - (home_text.get_height() // 2) + 200)
+        ))
+
+    render_pause()
+
     paused = True
 
     while paused:
@@ -200,38 +215,47 @@ def render_pause():
                 if event.key == pygame.K_p:
                     paused = False
                     break
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            sys.exit()
-            break
+                if event.key == pygame.K_r:
+                    fade_out(render_pause)
+                    main_game()
+                    break
+                if event.key == pygame.K_h:
+                    fade_out(render_pause)
+                    home()
+                    break
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                    break
 
         pygame.display.update()
 
 
-def render_main_game():
+def main_game():
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     players = pygame.sprite.Group()
+    enemy_bullets = pygame.sprite.Group()
 
-    enemy_delay_default = 4
-    enemy_delay = 2
+    enemy_delay = enemy_delay_default = .6
+    bullet_delay = bullet_delay_default = .7
 
     player = Player(
         x=(scr_width // 2) - 45,
         y=800,
         width=90,
         height=90,
-        vel=5,
+        health=4,
+        vel=10,
         score=0
     )
     player.add(players)
 
-    # rows, cols = 2, 4
-    rows, cols = 6, 14
+    enemies_direction = enemies_last_direction = 'RIGHT'
 
-    x, y = 20, 40
+    rows, cols = 6, 12
+
+    x = y = 200
 
     for i in range(rows):
 
@@ -241,14 +265,12 @@ def render_main_game():
                 y=y,
                 width=60,
                 height=60,
-                health=3,
-                vel=5
             ).add(enemies)
 
-            x += 80
+            x += 75
 
-        y += 80
-        x = 20
+        y += 45
+        x = 200
 
     bullet = Bullet(
         x=player.rect.x + (player.rect.width // 2) - 4,
@@ -257,7 +279,7 @@ def render_main_game():
 
     bullet.add(bullets)
 
-    score_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
 
     boom_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\boom.wav')
     hit_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\hit.wav')
@@ -268,8 +290,54 @@ def render_main_game():
         pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\move2.wav')
     )
 
+    def render_main_game():
+        players.update()
+        bullets.update()
+        enemies.update()
+        enemy_bullets.update()
+
+        win.fill(BLACK)
+        render_stars()
+        players.draw(win)
+        enemy_bullets.draw(win)
+        enemies.draw(win)
+        if not player.ready: bullets.draw(win)
+
+        win.blit(font.render(f'score: {player.score:0>5d}', True, WHITE), (0, 0))
+        win.blit(font.render(f'FPS: {clock.get_fps():.2f}', True, WHITE), (0, 30))
+
+    fade_in(render_main_game)
+
+    def move_aliens():
+        nonlocal enemies_direction
+        for enemy in enemies.sprites():
+            if enemies_direction == 'RIGHT':
+                enemy.rect.x += enemy.vel
+            elif enemies_direction == 'LEFT':
+                enemy.rect.x -= enemy.vel
+            elif enemies_direction == 'DOWN':
+                enemy.rect.y += enemy.height
+
+            enemy.change_img()
+
+        if enemies_direction == 'DOWN':
+            enemies_direction = 'RIGHT' if enemies_last_direction == 'LEFT' else 'LEFT'
+
+    def shoot():
+        enemy = random.choice(enemies.sprites())
+        EnemyBullet(
+            x=enemy.rect.centerx,
+            y=enemy.rect.bottom,
+            width=5,
+            height=15,
+            vel=20
+        ).add(enemy_bullets)
+
     while True:
-        dt = clock.tick(30) / 100
+        dt = clock.tick(30) / 1000
+
+        enemy_delay -= dt
+        bullet_delay -= dt
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -279,7 +347,17 @@ def render_main_game():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    render_pause()
+                    pause()
+
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                    break
+
+                if event.key == pygame.K_w:
+                    fade_out(render_main_game)
+                    win_game(font, player.score)
+                    break
 
         keys = pygame.key.get_pressed()
 
@@ -288,23 +366,10 @@ def render_main_game():
         if keys[pygame.K_RIGHT] and player.rect.x < scr_width - player.rect.width - player.vel:
             player.rect.x += player.vel
 
-        if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            sys.exit()
-            break
-
-        enemy_delay -= dt
 
         if keys[pygame.K_SPACE] and player.ready:
-            bullet.rect.x = player.rect.x + (player.rect.width // 2) - (bullet.rect.width // 2)
-            bullet.rect.y = player.rect.y
+            bullet.rect.centerx, bullet.rect.y = player.rect.centerx, player.rect.y
             player.ready = False
-
-        win.fill(BLACK)
-        render_stars()
-
-        players.update()
-        players.draw(win)
 
         for bullet in bullets.sprites():
 
@@ -315,66 +380,101 @@ def render_main_game():
                 player.ready = True
                 bullet.rect.y = player.rect.y
 
-        bullets.update()
-        if not player.ready:
-            bullets.draw(win)
-
         for enemy in enemies.sprites():
-
-            if enemy_delay <= 0:
-                enemy.move()
 
             if bullet.rect.colliderect(enemy.rect) and not player.ready:
                 player.ready = True
                 bullet.rect.y = player.rect.y
                 enemy.hit()
-                enemies.update()
-                if enemy.alive():
-                    pygame.mixer.Channel(0).play(hit_sound)
-                else:
-                    pygame.mixer.Channel(0).play(boom_sound)
+                # enemy.health = 0
+
+                pygame.mixer.Channel(0).play(boom_sound) if enemy.health == 0 else pygame.mixer.Channel(0).play(hit_sound)
 
                 player.score += 50
 
             if player.rect.colliderect(enemy.rect):
-                player.kill()
-
-        enemies.draw(win)
-
-        if len(enemies.sprites()) <= 0:
-            render_win()
-            break
-
-        if len(players.sprites()) <= 0:
-            render_game_over()
-            break
+                player.health = 0
 
         if enemy_delay <= 0:
+            for enemy in enemies.sprites():
+                if (enemies_direction == 'LEFT' and (enemy.rect.x - enemy.vel) <= 0) or \
+                        (enemies_direction == 'RIGHT' and (enemy.rect.right + enemy.vel) >= scr_width):
+                    enemies_last_direction = enemies_direction
+                    enemies_direction = 'DOWN'
+
+                    move_aliens()
+                    break
+            move_aliens()
+
             enemy_delay = enemy_delay_default
             pygame.mixer.Channel(1).play(move_sound[move_index])
             move_index += 1
             move_index %= len(move_sound)
 
-        win.blit(score_font.render(f'score: {player.score}', True, WHITE), (0, 0))
+        for enemy_bullet in enemy_bullets.sprites():
+            if enemy_bullet.rect.y < scr_height - enemy_bullet.vel:
+                enemy_bullet.rect.y += enemy_bullet.vel
+
+            else:
+                enemy_bullet.kill()
+
+            if player.rect.colliderect(enemy_bullet):
+                player.health = 0
+
+        if bullet_delay <= 0:
+            shoot()
+            bullet_delay = bullet_delay_default
+
+        if len(enemies.sprites()) <= 0:
+            fade_out(render_main_game)
+            win_game(font, player.score)
+            break
+
+        if len(players.sprites()) <= 0:
+            fade_out(render_main_game)
+            lose_game(font, player.score)
+            break
+
+        render_main_game()
 
         pygame.display.update()
 
 
-def render_win():
+def win_game(score_font, score):
     global star_field
 
-    win_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
-    win_text = win_font.render('YOU WIN!!!', True, WHITE)
-    win.blit(win_text, (
-        ((scr_width // 2) - (win_text.get_width() // 2)),
-        ((scr_height // 2) - (win_text.get_height() // 2)),
-    ))
+    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    win_text = font.render('YOU WIN!!!', True, WHITE)
+    restart_text = font.render('PRESS R TO RESTART', True, WHITE)
+    quit_text = font.render('PRESS ESC TO QUIT', True, WHITE)
+    home_text = font.render('PRESS H TO GO HOME', True, WHITE)
 
     win_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\win.wav')
     pygame.mixer.Channel(2).play(win_sound)
 
+    def render_win_game():
+        win.blit(score_font.render(f'score: {score:0>5d}', True, WHITE), (0, 0))
+        win.blit(win_text, (
+            ((scr_width // 2) - (win_text.get_width() // 2)),
+            ((scr_height // 2) - (win_text.get_height() // 2)),
+        ))
+        win.blit(restart_text, (
+            ((scr_width // 2) - (restart_text.get_width() // 2)),
+            ((scr_height // 2) - (restart_text.get_height() // 2) + 50),
+        ))
+        win.blit(home_text, (
+            ((scr_width // 2) - (home_text.get_width() // 2)),
+            ((scr_height // 2) - (home_text.get_height() // 2) + 150))
+                 )
+        win.blit(quit_text, (
+            ((scr_width // 2) - (quit_text.get_width() // 2)),
+            ((scr_height // 2) - (quit_text.get_height() // 2) + 100),
+        ))
+
+    render_win_game()
+
     while True:
-        dt = clock.tick(30) / 100
+        dt = clock.tick(30) / 1000
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -382,37 +482,60 @@ def render_win():
                 sys.exit()
                 break
 
-        keys = pygame.key.get_pressed()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    fade_out(render_win_game)
+                    main_game()
+                    break
 
-        if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            sys.exit()
-            break
+                if event.key == pygame.K_h:
+                    fade_out(render_win_game)
+                    home()
+                    break
+
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                    break
 
         pygame.display.update()
 
 
-def render_game_over():
+def lose_game(score_font, score):
     global star_field
 
-    lose_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
-    lose_text = lose_font.render('YOU LOST!', True, WHITE)
-    play_again_text = lose_font.render('PLAY AGAIN?(ENTER/RETURN)', True, WHITE)
-    exit_text = lose_font.render('QUIT?', True, WHITE)
-    win.blit(lose_text, (
-        ((scr_width // 2) - (lose_text.get_width() // 2)),
-        ((scr_height // 2) - (lose_text.get_height() // 2)),
-    ))
-    win.blit(lose_text, (
-        ((scr_width // 2) - (play_again_text.get_width() // 2)),
-        ((scr_height // 2) - (play_again_text.get_height() // 2) + 30),
-    ))
+    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    lose_text = font.render('YOU LOST!', True, WHITE)
+    play_again_text = font.render('PRESS R TO RESTART', True, WHITE)
+    quit_text = font.render('PRESS ESC TO QUIT', True, WHITE)
+    home_text = font.render('PRESS H TO GO HOME', True, WHITE)
 
     lose_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\lose.wav')
     pygame.mixer.Channel(2).play(lose_sound)
 
+    def render_lose_game():
+        win.blit(score_font.render(f'score: {score:0>5d}', True, WHITE), (0, 0))
+        win.blit(lose_text, (
+            ((scr_width // 2) - (lose_text.get_width() // 2)),
+            ((scr_height // 2) - (lose_text.get_height() // 2)),
+        ))
+        win.blit(play_again_text, (
+            ((scr_width // 2) - (play_again_text.get_width() // 2)),
+            ((scr_height // 2) - (play_again_text.get_height() // 2) + 50),
+        ))
+        win.blit(quit_text, (
+            ((scr_width // 2) - (quit_text.get_width() // 2)),
+            ((scr_height // 2) - (quit_text.get_height() // 2) + 100),
+        ))
+        win.blit(home_text, (
+            ((scr_width // 2) - (home_text.get_width() // 2)),
+            ((scr_height // 2) - (home_text.get_height() // 2) + 150)
+        ))
+
+    render_lose_game()
+
     while True:
-        dt = clock.tick(30) / 100
+        dt = clock.tick(30) / 1000
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -420,16 +543,24 @@ def render_game_over():
                 sys.exit()
                 break
 
-        keys = pygame.key.get_pressed()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    fade_out(render_lose_game)
+                    main_game()
+                    break
 
-        if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            sys.exit()
-            break
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                    break
+
+                if event.key == pygame.K_h:
+                    fade_out(render_lose_game)
+                    home()
+                    break
 
         pygame.display.update()
 
 
 if __name__ == '__main__':
-    render_home()
-    render_main_game()
+    intro()
