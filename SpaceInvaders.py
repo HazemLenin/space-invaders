@@ -19,9 +19,12 @@ clock = pygame.time.Clock()
 scr_width, scr_height = pygame.display.get_desktop_sizes()[0]
 
 # setup window
-win = pygame.display.set_mode((scr_width, scr_height))
+win = pygame.display.set_mode((scr_width, scr_height), pygame.FULLSCREEN)
 
 pygame.display.set_caption('Space Invaders')
+
+icon = pygame.image.load(r'.\assets\images\New Piskel-5.png')
+pygame.display.set_icon(icon)
 
 from gameSprites import Player, Bullet, Enemy, EnemyBullet
 
@@ -30,8 +33,6 @@ WHITE = (255, 255, 255)
 LIGHT_GREY = (192, 192, 192)
 DARK_GREY = (128, 128, 128)
 BLACK = (0, 0, 0)
-YELLOW = (255, 255, 0)
-GREEN = (0, 255, 0)
 
 jumps_to_255 = 60
 sleep_between_jumps = 70
@@ -60,7 +61,7 @@ def fade_out(render_func):
 
 
 def intro():
-    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 70)
+    font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 70)
     text = font.render('HAZEM LENIN', True, WHITE)
 
     def render_intro():
@@ -98,15 +99,15 @@ def home():
     index = 0
     choices = ['START', 'QUIT']
 
-    title_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 70)
-    selection_font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 50)
+    title_font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 70)
+    selection_font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 50)
     title = title_font.render('SPACE INVADERS', True, WHITE)
 
     start_text = selection_font.render('> START', True, WHITE)
     quit_text = selection_font.render('QUIT', True, WHITE)
 
-    change_selection_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\change_selection.wav')
-    select_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\select.wav')
+    change_selection_sound = pygame.mixer.Sound(r'.\assets\sounds\change_selection.wav')
+    select_sound = pygame.mixer.Sound(r'.\assets\sounds\select.wav')
 
     def render_home():
         win.fill(BLACK)
@@ -171,7 +172,7 @@ def home():
 
 
 def pause():
-    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 50)
+    font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 50)
     pause_text = font.render('PAUSED', True, WHITE)
     continue_text = font.render('PRESS P TO CONTINUE', True, WHITE)
     restart_text = font.render('PRESS R TO RESTART', True, WHITE)
@@ -279,15 +280,15 @@ def main_game():
 
     bullet.add(bullets)
 
-    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 40)
 
-    boom_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\boom.wav')
-    hit_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\hit.wav')
+    boom_sound = pygame.mixer.Sound(r'.\assets\sounds\boom.wav')
+    hit_sound = pygame.mixer.Sound(r'.\assets\sounds\hit.wav')
 
     move_index = 0
     move_sound = (
-        pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\move1.wav'),
-        pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\move2.wav')
+        pygame.mixer.Sound(r'.\assets\sounds\move1.wav'),
+        pygame.mixer.Sound(r'.\assets\sounds\move2.wav')
     )
 
     def render_main_game():
@@ -443,13 +444,13 @@ def main_game():
 def win_game(score_font, score):
     global star_field
 
-    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 40)
     win_text = font.render('YOU WIN!!!', True, WHITE)
     restart_text = font.render('PRESS R TO RESTART', True, WHITE)
     quit_text = font.render('PRESS ESC TO QUIT', True, WHITE)
     home_text = font.render('PRESS H TO GO HOME', True, WHITE)
 
-    win_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\win.wav')
+    win_sound = pygame.mixer.Sound(r'.\assets\sounds\win.wav')
     pygame.mixer.Channel(2).play(win_sound)
 
     def render_win_game():
@@ -504,13 +505,13 @@ def win_game(score_font, score):
 def lose_game(score_font, score):
     global star_field
 
-    font = pygame.font.Font(sys.path[0] + r'\assets\fonts\slkscr.ttf', 40)
+    font = pygame.font.Font(r'.\assets\fonts\slkscr.ttf', 40)
     lose_text = font.render('YOU LOST!', True, WHITE)
     play_again_text = font.render('PRESS R TO RESTART', True, WHITE)
     quit_text = font.render('PRESS ESC TO QUIT', True, WHITE)
     home_text = font.render('PRESS H TO GO HOME', True, WHITE)
 
-    lose_sound = pygame.mixer.Sound(sys.path[0] + r'\assets\sounds\lose.wav')
+    lose_sound = pygame.mixer.Sound(r'.\assets\sounds\lose.wav')
     pygame.mixer.Channel(2).play(lose_sound)
 
     def render_lose_game():
