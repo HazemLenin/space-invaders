@@ -70,9 +70,35 @@ def intro():
             ((scr_height // 2) - (text.get_height() // 2)),
         ))
 
+    intro_image = pygame.image.load(r'.\assets\images\space-invaders.jpg')
+
+    width = scr_width * 0.9
+    height = width * intro_image.get_height() / intro_image.get_width()
+
+    # width = width * (scr_height * 0.8) / height  # reduce width to keep ratio
+    # height = scr_height * 0.8  # max height
+
+    intro_image = pygame.transform.scale(
+        intro_image,
+        (
+            int(width),
+            int(height)
+        )
+    )
+
+    def render_intro_image():
+        win.blit(intro_image, (
+            (scr_width//2) - (intro_image.get_width()//2), 0
+        ))
+
     fade_in(render_intro)
     pygame.time.delay(2000)
     fade_out(render_intro)
+
+    fade_in(render_intro_image)
+    pygame.time.delay(2000)
+    fade_out(render_intro_image)
+
     home()
 
 star_field = []  # to store stars positions

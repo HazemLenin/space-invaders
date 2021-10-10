@@ -13,7 +13,7 @@ class Player(pygame.sprite.Sprite):
         self.height = height
         self.frames = (
             sprite_sheet.parse_sprite('New Piskel4.png'),
-            sprite_sheet.parse_sprite('New Piskel5.png')
+            sprite_sheet.parse_sprite('New Piskel7.png')
         )
         self.frames_index = 0
         self.image = pygame.transform.scale(
