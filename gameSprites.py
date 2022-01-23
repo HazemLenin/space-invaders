@@ -13,6 +13,8 @@ class Player(pygame.sprite.Sprite):
         self.height = height
         self.frames = (
             sprite_sheet.parse_sprite('New Piskel4.png'),
+            sprite_sheet.parse_sprite('New Piskel5.png'),
+            sprite_sheet.parse_sprite('New Piskel6.png'),
             sprite_sheet.parse_sprite('New Piskel7.png')
         )
         self.frames_index = 0
@@ -27,12 +29,30 @@ class Player(pygame.sprite.Sprite):
         self.score = score
 
     def update(self):
-        if self.health <= 1:
+        if self.health == 3:
             self.frames_index = 1
             self.image = pygame.transform.scale(
                 self.frames[self.frames_index],
                 (self.width, self.height)
             )
+        if self.health == 2:
+            self.frames_index = 2
+            self.image = pygame.transform.scale(
+                self.frames[self.frames_index],
+                (self.width, self.height)
+            )
+        if self.health == 1:
+            self.frames_index = 3
+            self.image = pygame.transform.scale(
+                self.frames[self.frames_index],
+                (self.width, self.height)
+            )
+            if self.health == 0:
+                self.frames_index = 4
+                self.image = pygame.transform.scale(
+                    self.frames[self.frames_index],
+                    (self.width, self.height)
+                )
         if self.health <= 0:
             self.kill()
 

@@ -88,7 +88,7 @@ def intro():
 
     def render_intro_image():
         win.blit(intro_image, (
-            (scr_width//2) - (intro_image.get_width()//2), 0
+            (scr_width // 2) - (intro_image.get_width() // 2), 0
         ))
 
     fade_in(render_intro)
@@ -100,6 +100,7 @@ def intro():
     fade_out(render_intro_image)
 
     home()
+
 
 star_field = []  # to store stars positions
 
@@ -328,10 +329,12 @@ def main_game():
         players.draw(win)
         enemy_bullets.draw(win)
         enemies.draw(win)
-        if not player.ready: bullets.draw(win)
+        if not player.ready:
+            bullets.draw(win)
 
         win.blit(font.render(f'score: {player.score:0>5d}', True, WHITE), (0, 0))
         win.blit(font.render(f'FPS: {clock.get_fps():.2f}', True, WHITE), (0, 30))
+        win.blit(font.render(f'HEALTH: {player.health}', True, WHITE), (0, 60))
 
     fade_in(render_main_game)
 
@@ -393,7 +396,6 @@ def main_game():
         if keys[pygame.K_RIGHT] and player.rect.x < scr_width - player.rect.width - player.vel:
             player.rect.x += player.vel
 
-
         if keys[pygame.K_SPACE] and player.ready:
             bullet.rect.centerx, bullet.rect.y = player.rect.centerx, player.rect.y
             player.ready = False
@@ -415,7 +417,8 @@ def main_game():
                 enemy.hit()
                 # enemy.health = 0
 
-                pygame.mixer.Channel(0).play(boom_sound) if enemy.health == 0 else pygame.mixer.Channel(0).play(hit_sound)
+                pygame.mixer.Channel(0).play(boom_sound) if enemy.health == 0 else pygame.mixer.Channel(0).play(
+                    hit_sound)
 
                 player.score += 50
 
@@ -446,7 +449,8 @@ def main_game():
                 enemy_bullet.kill()
 
             if player.rect.colliderect(enemy_bullet):
-                player.health = 0
+                enemy_bullet.kill()
+                player.health -= 1
 
         if bullet_delay <= 0:
             shoot()
